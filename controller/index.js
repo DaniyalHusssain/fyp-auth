@@ -81,18 +81,25 @@ module.exports.signUp = async (req, res) => {
 module.exports.signIN = async (req, res) => {
   const { email, password } = req.body;
 
-  const findifexists = await User.findOne({ email: email });
-  console.log(findifexists);
+  try {
+    const user = await User.findOne({ email: email });
 
-  if (!findifexists) {
-    return res.status(401).send({ auth: false, message: "Email not found" });
-  } else {
-    // var isMatch = bcrypt.compare
-    const isPasswordValid = await bcrypt.compareSync(
-      password,
-      findifexists.password
-    );
-    res.status(200).send({ auth: true, message: `user  has been sing in` });
+    if (!user) {
+      return res.status(401).send({ auth: false, message: "Email not found" });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res
+        .status(401)
+        .send({ auth: false, message: "Incorrect password" });
+    }
+
+    res.status(200).send({ auth: true, message: `User has been signed in` });
+  } catch (error) {
+    console.error("Error during sign-in:", error);
+    res.status(500).send({ message: "Internal server error" });
   }
 };
 module.exports.logout = (req, res) => {
