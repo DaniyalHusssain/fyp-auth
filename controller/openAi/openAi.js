@@ -2,7 +2,7 @@ const OpenAi = require("openai");
 const ImageModel = require("../../models/ImageSchem");
 
 const openai = new OpenAi({
-  apiKey: "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",
+  apiKey: "ai key",
 });
 
 module.exports.textToImageGen = async (req, res) => {
