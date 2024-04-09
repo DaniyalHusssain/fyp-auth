@@ -32,12 +32,7 @@ const userSchema = new mongoose.Schema({
     givenName: { type: String },
     familyName: { type: String },
   },
-  // name: {
-  //   firstname: { type: String },
-  //   lastname: { type: String },
-  // },
 
-  // name: { type: String, required: true },
   profilePicture: String,
   // Timestamps for creation and update
   createdAt: {

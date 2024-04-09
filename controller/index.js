@@ -64,8 +64,8 @@ module.exports.signUp = async (req, res) => {
 
     const new_user = new User({
       email: email,
-      givenName: givenName,
-      familyName: familyName,
+      firstName: givenName,
+      lastName: familyName,
       password: hashedPassword,
       authMethod: "manual",
     });
@@ -115,25 +115,39 @@ module.exports.logout = (req, res) => {
     });
   });
 };
-
-module.exports.forgetPasword = async (req, res) => {
+module.exports.changePassword = async (req, res) => {
   const { email, password } = req.body;
 
-  const findifexists = await User.findOne({ email: email });
+  try {
+    const user = await User.findOne({ email: email });
 
-  if (!findifexists) {
-    return res.status(308).json({ message: "email does not exist" });
-  } else {
+    if (!user) {
+      return res.status(308).json({ message: "Email does not exist" });
+    }
+
+    if (user.authMethod === "google") {
+      return res.json({
+        message:
+          "User signed in through Google account cannot change password.",
+      });
+    }
+
     const salt = bcrypt.genSaltSync(10); // 10 is the number of salt rounds
     const hashedPassword = bcrypt.hashSync(password, salt);
 
-    // const isPasswordValid = await bcrypt.compareSync("password", hashedPassword);
-    const user = await User.findOneAndUpdate(
+    const updatedUser = await User.findOneAndUpdate(
       { email: email },
       { password: hashedPassword },
       { new: true }
     );
 
-    res.status(201).json({ message: `pasword has benn updated` });
+    res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong");
   }
+};
+
+module.exports.forgetPassword = async (req, res) => {
+  // here email system  has  to be added
 };
