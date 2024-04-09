@@ -22,7 +22,7 @@ const ImageModel = mongoose.model("Image", ImageSchema);
 
 // Initialize OpenAI client
 const openai = new OpenAi({
-  apiKey: "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",
+  apiKey: "ai key",
 });
 
 // Controller function to generate image from text
