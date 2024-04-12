@@ -1,6 +1,10 @@
 const bcrypt = require("bcryptjs");
-
+const nodemailer = require("nodemailer");
+const uuid = require("uuid");
 const User = require("../models/chat-model");
+const sendEmail = require("../services/email");
+
+const otpGenerator = require("otp-generator");
 
 module.exports.oAuth = async (req, res, next) => {
   try {
@@ -78,8 +82,8 @@ module.exports.signUp = async (req, res) => {
   }
 };
 
-module.exports.signIN = async (req, res) => {
-  const { email, password } = req.body;
+module.exports.signIN = async (req, res, next) => {
+  const { email, password, emailforverification } = req.body;
 
   try {
     const user = await User.findOne({ email: email });
@@ -96,12 +100,51 @@ module.exports.signIN = async (req, res) => {
         .send({ auth: false, message: "Incorrect password" });
     }
 
-    res.status(200).send({ auth: true, message: `User has been signed in` });
+    const otp = parseInt(Math.floor(1000 + Math.random() * 9000));
+
+    sendEmail(emailforverification, "verify your otp", `Your OTP is ${otp}`)
+      .then(async () => {
+        // Assuming you have a User model imported and emailforverification contains the email
+        const userEmail = emailforverification;
+        const newOTP = otp; // Assuming otp is generated somewhere before this code
+        try {
+          const updatedUser = await User.findOneAndUpdate(
+            { email: email }, // Find the document with the specified email
+            { otp: newOTP }, // Update the OTP field with the new OTP
+            { new: true } // Return the updated document
+          );
+          // console.log("OTP updated successfully:");
+
+          return res.status(200).send("opt has been send to your mail");
+        } catch (error) {
+          console.error("Failed to update OTP:", error);
+        }
+      })
+      .catch((err) => console.error("Failed to send email:", err));
   } catch (error) {
     console.error("Error during sign-in:", error);
     res.status(500).send({ message: "Internal server error" });
   }
 };
+
+module.exports.verifySign = async (req, res, next) => {
+  const { recivedOtp, email } = req.body;
+
+  try {
+    const ifverifiedLogin = await User.findOne({ email: email });
+
+    if (ifverifiedLogin.otp == recivedOtp) {
+      res.status(200).send({ auth: true, message: `User has been signed in` });
+    } else {
+      res.status(403).send({
+        auth: false,
+        message:
+          "Please verify your account first by entering the OTP sent on your registered Email Id.",
+      });
+    }
+  } catch (error) {}
+};
+
 module.exports.logout = (req, res) => {
   req.logout(function (err) {
     if (err) {
@@ -116,8 +159,8 @@ module.exports.logout = (req, res) => {
   });
 };
 module.exports.changePassword = async (req, res) => {
-  const { email, password } = req.body;
-
+  const { email, oldpassword, newpassword, confirmpassword } = req.body;
+  // const { email } = req.body;
   try {
     const user = await User.findOne({ email: email });
 
@@ -132,16 +175,26 @@ module.exports.changePassword = async (req, res) => {
       });
     }
 
-    const salt = bcrypt.genSaltSync(10); // 10 is the number of salt rounds
-    const hashedPassword = bcrypt.hashSync(password, salt);
-
-    const updatedUser = await User.findOneAndUpdate(
-      { email: email },
-      { password: hashedPassword },
-      { new: true }
+    const salt = bcrypt.genSaltSync(10);
+    const isOldpasswordCorrect = await bcrypt.compareSync(
+      oldpassword,
+      user.password
     );
 
-    res.json({ message: "Password updated successfully" });
+    if (isOldpasswordCorrect) {
+      if (newpassword === confirmpassword) {
+        const hashedPassword = bcrypt.hashSync(newpassword, salt);
+        const updatedUser = await User.findOneAndUpdate(
+          { email: email },
+          { password: hashedPassword },
+          { new: true }
+        );
+
+        res.send("password has been changed");
+      } else {
+        res.send("passord doesnt match");
+      }
+    }
   } catch (error) {
     console.error(error);
     res.status(500).send("Something went wrong");
@@ -149,5 +202,27 @@ module.exports.changePassword = async (req, res) => {
 };
 
 module.exports.forgetPassword = async (req, res) => {
-  // here email system  has  to be added
+  const { email, newpassword } = req.body;
+  // Check if the email is provided
+  if (!email) {
+    return res.status(400).json({ error: "Email is required" });
+  }
+  const user = await User.findOne({ email: email });
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+  if (user.authMethod === "google") {
+    return res.json({
+      message: "User signed in through Google account cannot change password.",
+    });
+  }
+  const salt = bcrypt.genSaltSync(10);
+  const hashedPassword = bcrypt.hashSync(newpassword, salt);
+  const updatedUser = await User.findOneAndUpdate(
+    { email: email },
+    { password: hashedPassword },
+    { new: true }
+  );
+
+  res.send("password has been changed");
 };

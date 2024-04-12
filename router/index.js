@@ -7,6 +7,7 @@ const {
   logout,
   changePassword,
   forgetPassword,
+  verifySign,
 } = require("../controller");
 const { textToImageGen } = require("../controller/openAi/openAi");
 const getGoogleAuthMiddleware = require("../middleware/googleOAuth");
@@ -24,6 +25,8 @@ router.get("/success", oAuth);
 router.post("/signUP", signUp);
 
 router.post("/signIn", signIN);
+router.post("/signInverify", verifySign);
+
 router.get("/logout", logout);
 
 router.post("/changePassword", changePassword);

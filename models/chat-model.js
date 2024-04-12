@@ -33,6 +33,11 @@ const userSchema = new mongoose.Schema({
     familyName: { type: String },
   },
 
+  otp: {
+    code: Number,
+    expiresAt: Date,
+  },
+
   profilePicture: String,
   // Timestamps for creation and update
   createdAt: {
