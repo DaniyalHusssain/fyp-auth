@@ -4,9 +4,12 @@ const {
   oAuth,
   signUp,
   signIN,
-  forgetPasword,
   logout,
+  changePassword,
+  forgetPassword,
+  verifySign,
 } = require("../controller");
+const { textToImageGen } = require("../controller/openAi/openAi");
 const getGoogleAuthMiddleware = require("../middleware/googleOAuth");
 
 const router = require("express").Router();
@@ -22,7 +25,13 @@ router.get("/success", oAuth);
 router.post("/signUP", signUp);
 
 router.post("/signIn", signIN);
+router.post("/signInverify", verifySign);
+
 router.get("/logout", logout);
 
-router.post("/forgetpassword", forgetPasword);
+router.post("/changePassword", changePassword);
+router.post("/forgetPassword", forgetPassword);
+
+router.get("/text-to-image", textToImageGen);
+
 module.exports = router;

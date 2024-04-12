@@ -5,10 +5,9 @@ const passport = require("passport");
 // Import GoogleStrategy and other necessary modules here
 const GoogleStrategy = require("passport-google-oauth2").Strategy;
 
-const GOOGLE_CLIENT_ID =
-  "746546655255-6pthcbsoo6stkgt7pkrcohaub89psq3j.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = "gid";
 
-const GOOGLE_CLIENT_SECRET = "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";
+const GOOGLE_CLIENT_SECRET = "gclientsecret";
 
 passport.use(
   new GoogleStrategy(
