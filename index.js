@@ -29,15 +29,6 @@ app.get(
   })
 );
 
-// app.get("/auth/failure", (req, res) => {
-//   res.send(`Something went wrong`);
-// });
-
-// app.get("/protected", isLoggedIn, (req, res) => {
-//   res.send(`Welcome ${req.user.displayName}`);
-// });
-
-// Connect to MongoDB
 mongoose
   .connect(process.env.URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
@@ -50,7 +41,3 @@ mongoose
   .catch((err) => {
     console.error("Error connecting to MongoDB:", err);
   });
-
-// app.listen(3000, () => {
-//   console.log(`Server is running on PORT: 3000`);
-// });
