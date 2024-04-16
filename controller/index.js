@@ -150,8 +150,14 @@ module.exports.signIN = async (req, res, next) => {
 
 module.exports.verifySign = async (req, res, next) => {
   const { recivedOtp } = req.body;
-  console.log(recivedOtp);
+
   try {
+    if (typeof recivedOtp !== "number") {
+      return res
+        .status(400)
+        .json({ error: "Invalid OTP. OTP must be a number." });
+    }
+
     const ifverifiedLogin = await User.findOne({ otp: recivedOtp });
 
     if (ifverifiedLogin) {
