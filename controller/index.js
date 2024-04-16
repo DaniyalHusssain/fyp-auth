@@ -105,7 +105,7 @@ module.exports.signIN = async (req, res, next) => {
   const { email, password } = req.body;
 
   try {
-    const [user] = await User.findOne({ email: email });
+    const user = await User.findOne({ email: email });
 
     if (!user) {
       return res.status(401).send({ auth: false, message: "Email not found" });
