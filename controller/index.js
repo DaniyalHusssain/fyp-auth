@@ -3,9 +3,10 @@ const nodemailer = require("nodemailer");
 const uuid = require("uuid");
 const User = require("../models/chat-model");
 const sendEmail = require("../services/email");
+const jwt = require("jsonwebtoken");
 
 const otpGenerator = require("otp-generator");
-
+const secretKey = "thisismysecrettoken";
 module.exports.oAuth = async (req, res, next) => {
   try {
     console.log(req.user);
@@ -41,19 +42,36 @@ module.exports.oAuth = async (req, res, next) => {
       await user.save();
     }
 
-    res.status(200).json({ message: "User authenticated successfully", user });
+    return res.status(200).json(user);
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
+module.exports.authenticateToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (token == null) {
+    return res.status(401).json({ error: "Token not provided" });
+  }
+
+  jwt.verify(token, secretKey, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: "Invalid token" });
+    }
+    req.user = user;
+    next();
+  });
+};
+
 module.exports.signUp = async (req, res) => {
-  const { firstName, lastname, email, password } = req.body;
+  const { firstName, lastName, email, password } = req.body;
 
   try {
     const givenName = firstName;
-    const familyName = lastname;
+    const familyName = lastName;
 
     const checkifexists = await User.findOne({ email: email });
 
@@ -83,13 +101,19 @@ module.exports.signUp = async (req, res) => {
 };
 
 module.exports.signIN = async (req, res, next) => {
-  const { email, password, emailforverification } = req.body;
+  const { email, password } = req.body;
 
   try {
     const user = await User.findOne({ email: email });
 
     if (!user) {
       return res.status(401).send({ auth: false, message: "Email not found" });
+    } else {
+      const token = jwt.sign({ userEmail: user.email }, secretKey, {
+        expiresIn: "3h",
+      });
+
+      res.json({ user, token });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -102,10 +126,10 @@ module.exports.signIN = async (req, res, next) => {
 
     const otp = parseInt(Math.floor(1000 + Math.random() * 9000));
 
-    sendEmail(emailforverification, "verify your otp", `Your OTP is ${otp}`)
+    sendEmail(email, "verify your otp", `Your OTP is ${otp}`)
       .then(async () => {
         // Assuming you have a User model imported and emailforverification contains the email
-        const userEmail = emailforverification;
+        const userEmail = email;
         const newOTP = otp; // Assuming otp is generated somewhere before this code
         try {
           const updatedUser = await User.findOneAndUpdate(
@@ -113,6 +137,8 @@ module.exports.signIN = async (req, res, next) => {
             { otp: newOTP }, // Update the OTP field with the new OTP
             { new: true } // Return the updated document
           );
+
+          // req.userdata = email;
           // console.log("OTP updated successfully:");
 
           return res.status(200).send("opt has been send to your mail");
@@ -128,12 +154,12 @@ module.exports.signIN = async (req, res, next) => {
 };
 
 module.exports.verifySign = async (req, res, next) => {
-  const { recivedOtp, email } = req.body;
+  const { recivedOtp } = req.body;
 
   try {
-    const ifverifiedLogin = await User.findOne({ email: email });
+    const ifverifiedLogin = await User.findOne({ otp: recivedOtp });
 
-    if (ifverifiedLogin.otp == recivedOtp) {
+    if (ifverifiedLogin) {
       res.status(200).send({ auth: true, message: `User has been signed in` });
     } else {
       res.status(403).send({
@@ -148,11 +174,11 @@ module.exports.verifySign = async (req, res, next) => {
 module.exports.logout = (req, res) => {
   req.logout(function (err) {
     if (err) {
-      return next(err);
+      return err;
     }
     req.session.destroy(function (err) {
       if (err) {
-        return next(err);
+        return err;
       }
       res.send("See you later!");
     });

@@ -3,6 +3,7 @@ const session = require("express-session");
 const passport = require("passport");
 const morgan = require("morgan");
 const mongoose = require("mongoose");
+const cors = require("cors"); // Import the cors middleware
 
 require("./middleware/googleOAuth"); // Ensure this imports your passport configuration
 
@@ -17,6 +18,9 @@ app.use(morgan("dev"));
 app.use(session({ secret: "cats" }));
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Enable CORS for all routes
+app.use(cors());
 
 // Routes
 app.use("/api", router);
@@ -34,8 +38,8 @@ mongoose
   .then(() => {
     console.log("Connected to MongoDB");
     // Start the server after connecting to MongoDB
-    app.listen(3000, () => {
-      console.log(`Server is running on PORT: 3000`);
+    app.listen(8000, () => {
+      console.log(`Server is running on PORT: 8000`);
     });
   })
   .catch((err) => {

@@ -8,23 +8,24 @@ const {
   changePassword,
   forgetPassword,
   verifySign,
+  signINVerifyed,
+  authenticateToken,
 } = require("../controller");
 const { textToImageGen } = require("../controller/openAi/openAi");
 const getGoogleAuthMiddleware = require("../middleware/googleOAuth");
 
 const router = require("express").Router();
 
-// function isLoggedIn(req, res, next) {
-//   req.user ? next() : res.sendStatus(401);
-// }
-
 router.get("/googlesignIn", getGoogleAuthMiddleware());
 router.get("/success", oAuth);
 // =========================
 
-router.post("/signUP", signUp);
-
+router.post("/signUp", signUp);
+router.get("/session", authenticateToken, (req, res) => {
+  res.json({ message: "Protected endpoint accessed successfully" });
+});
 router.post("/signIn", signIN);
+// router.post("/signInVerified", signINVerifyed);
 router.post("/signInverify", verifySign);
 
 router.get("/logout", logout);
@@ -32,6 +33,6 @@ router.get("/logout", logout);
 router.post("/changePassword", changePassword);
 router.post("/forgetPassword", forgetPassword);
 
-router.get("/text-to-image", textToImageGen);
+router.post("/text-to-image", textToImageGen);
 
 module.exports = router;
