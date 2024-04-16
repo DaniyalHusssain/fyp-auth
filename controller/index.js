@@ -57,11 +57,12 @@ module.exports.authenticateToken = (req, res, next) => {
     return res.status(401).json({ error: "Token not provided" });
   }
 
-  jwt.verify(token, secretKey, (err, user) => {
+  jwt.verify(token, secretKey, (err, data) => {
     if (err) {
       return res.status(403).json({ error: "Invalid token" });
     }
-    req.user = user;
+    req.user = data;
+    return res.json(data);
     next();
   });
 };
@@ -104,16 +105,10 @@ module.exports.signIN = async (req, res, next) => {
   const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ email: email });
+    const [user] = await User.findOne({ email: email });
 
     if (!user) {
       return res.status(401).send({ auth: false, message: "Email not found" });
-    } else {
-      const token = jwt.sign({ userEmail: user.email }, secretKey, {
-        expiresIn: "3h",
-      });
-
-      res.json({ user, token });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -155,12 +150,16 @@ module.exports.signIN = async (req, res, next) => {
 
 module.exports.verifySign = async (req, res, next) => {
   const { recivedOtp } = req.body;
-
+  console.log(recivedOtp);
   try {
     const ifverifiedLogin = await User.findOne({ otp: recivedOtp });
 
     if (ifverifiedLogin) {
-      res.status(200).send({ auth: true, message: `User has been signed in` });
+      const token = jwt.sign({ ifverifiedLogin }, secretKey, {
+        expiresIn: "3h",
+      });
+
+      return res.json({ ifverifiedLogin, token });
     } else {
       res.status(403).send({
         auth: false,

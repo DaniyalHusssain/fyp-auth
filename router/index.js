@@ -21,9 +21,7 @@ router.get("/success", oAuth);
 // =========================
 
 router.post("/signUp", signUp);
-router.get("/session", authenticateToken, (req, res) => {
-  res.json({ message: "Protected endpoint accessed successfully" });
-});
+router.get("/session", authenticateToken);
 router.post("/signIn", signIN);
 // router.post("/signInVerified", signINVerifyed);
 router.post("/signInverify", verifySign);
