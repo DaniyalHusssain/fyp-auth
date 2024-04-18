@@ -10,6 +10,7 @@ const {
   verifySign,
   signINVerifyed,
   authenticateToken,
+  emojitotextgen,
 } = require("../controller");
 const { textToImageGen } = require("../controller/openAi/openAi");
 const getGoogleAuthMiddleware = require("../middleware/googleOAuth");
@@ -32,5 +33,4 @@ router.post("/changePassword", changePassword);
 router.post("/forgetPassword", forgetPassword);
 
 router.post("/text-to-image", textToImageGen);
-
 module.exports = router;
