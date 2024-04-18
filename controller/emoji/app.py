@@ -1,10 +1,12 @@
 from flask import Flask, request, jsonify
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 import pandas as pd
+from flask_cors import CORS
+
 
 app = Flask(__name__)
 
-
+CORS(app, resources={r"/*": {"origins": "*"}}) 
 csv_file_path = "emoji_df.csv"
 df = pd.read_csv(csv_file_path)
 
@@ -31,8 +33,7 @@ def generate_text_with_transformer(text):
 
 @app.route('/generate-text', methods=['POST'])
 def generate_text_route():
-    request_data = request.get_json()
-    emoji = request_data['emoji']
+    emoji = request.form['emoji']
     generated_text, sub_group, group, codepoints = generate_text(emoji)
     random_text = generate_text_with_transformer(generated_text)
     return jsonify({'generated_text': generated_text, 'sub_group': sub_group, 'group': group, 'codepoints': codepoints, 'random_text': random_text})
